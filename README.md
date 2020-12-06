@@ -13,6 +13,13 @@ The network will be trained using a IBM's "Double Pendulum Chaotic" dataset that
 
 ![Real Double Pendulum Gif](./IMG/ibm_irl_pendulum.gif)
 
+> The movement slowed down greatly when converting this gif.
+
 While the data set is generated from a series of videos, the network will be trained using a collection of CSV files containing x and y position data for the pendulum. In addition to this real-life data set, I'll also be using a physics-based model to predict the pendulum. The physics based model will be derived and calculated beforehand for each test data set. This data set will be used to add an additional term to the loss function: the physics-based error.
 
 The network will be trained to minimize the total error between the actual dataset and the error with physics based model.
+
+## Plotting
+To visualize the csv data, the `make_plot.py` file can be used to generate an animated plot showing the movement of the pendulum. This will be useful for comparing the movement of the actual double pendulum, the physics-based model, and the network's model. An example of the visualization can be seen below:
+
+![Animated Double Pendulum Gif](./IMG/pendulum_0.gif)
