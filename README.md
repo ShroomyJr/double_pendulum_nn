@@ -22,4 +22,10 @@ The network will be trained to minimize the total error between the actual datas
 ## Plotting
 To visualize the csv data, the `make_plot.py` file can be used to generate an animated plot showing the movement of the pendulum. This will be useful for comparing the movement of the actual double pendulum, the physics-based model, and the network's model. An example of the visualization can be seen below:
 
-![Animated Double Pendulum Gif](./IMG/pendulum_0.gif)
+![Animated Double Pendulum Gif](./IMG/pendulum_0_rotated.gif)
+
+> While plotting, it's become apparent that the data needed to be rotated 90 degrees to match the original footage
+
+# Deriving the Physics-guided model
+
+We're looking to derive a way to represent the pendulum in a way that will fit more simply

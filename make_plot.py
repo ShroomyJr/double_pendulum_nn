@@ -19,21 +19,21 @@ def plot_time(i, x_1, y_1, x_2, y_2, x_3, y_3, line, ax):
     line.set_data([x_1[i], x_2[i], x_3[i]], [y_1[i], y_2[i], y_3[i]])
     return line,
     # Circles corresponding to position of weights on pendulum
-    # c0 = Circle((x_1[i], y_1[i]), 10, fc="r", ec="r", zorder=10)
-    # c1 = Circle((x_2[i], y_2[i]), 10, fc="g", ec="g", zorder=10)
-    # c2 = Circle((x_3[i], y_3[i]), 10, fc="b", ec="b", zorder=10)
+    # c0 = Circle((x_1[i], y_1[i]), 50, fc="r", ec="r", zorder=10)
+    # c1 = Circle((x_2[i], y_2[i]), 50, fc="g", ec="g", zorder=10)
+    # c2 = Circle((x_3[i], y_3[i]), 50, fc="b", ec="b", zorder=10)
     
     # patches = [ax.add_patch(c0), ax.add_patch(c1), ax.add_patch(c2), line]
     # return patches
 
-def make_plot(x_1, y_1, x_2, y_2, x_3, y_3, path, limit=1000):
+def make_plot(x_1, y_1, x_2, y_2, x_3, y_3, path, limit=200):
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=False, xlim=(0, 500), ylim=(0, 500))
+    ax = fig.add_subplot(111, autoscale_on=False, ylim=(-2500, 0), xlim=(0, 2500))
     ax.set_facecolor('black')
     line, = ax.plot([],[], 'o-', lw=2)
     fargs = (x_1[:limit], y_1[:limit], x_2[:limit], y_2[:limit], x_3[:limit], y_3[:limit], line, ax,)
     ani = FuncAnimation(fig, plot_time, np.arange(1, len(fargs[0])),
-                        interval=12, blit=True, fargs=fargs)
+                        interval=2, blit=True, fargs=fargs)
     plt.show()
     ani.save(path, writer='imagemagick', fps=30)
     
@@ -44,17 +44,16 @@ def unpack_csv(path):
         x_1, x_2, x_3 = [], [], []
         y_1, y_2, y_3 = [], [], []
         for row in position_reader:
-            x_1.append(int(row[0])/5)
-            y_1.append(int(row[1])/5)
-            x_2.append(int(row[2])/5)
-            y_2.append(int(row[3])/5)
-            x_3.append(int(row[4])/5)
-            y_3.append(int(row[5])/5)
+            y_1.append(-int(row[0]))
+            x_1.append(int(row[1]))
+            y_2.append(-int(row[2]))
+            x_2.append(int(row[3]))
+            y_3.append(-int(row[4]))
+            x_3.append(int(row[5]))
         
         return x_1, y_1, x_2, y_2, x_3, y_3
 
 x_1, y_1, x_2, y_2, x_3, y_3 = unpack_csv('./dataset/dpc_csv/0.csv')   
-make_plot(x_1, y_1, x_2, y_2, x_3, y_3, './IMG/pendulum_0.gif', 300)
-
+make_plot(x_1, y_1, x_2, y_2, x_3, y_3, './IMG/pendulum_0_rotated.gif')
 
     
