@@ -8,8 +8,9 @@ from make_plot import *
 
 G = 9.8  # acceleration due to gravity, in m/s^2
 # create a time array from 0..100 sampled at 0.05 second steps
-dt = 0.01
+dt = 0.0166
 t = np.arange(0.0, 10, dt)
+print(t)
 
 
 def get_angle(x_1, y_1, x_2, y_2, x_3, y_3):
@@ -49,7 +50,7 @@ def physics_model(M1, M2, start_pos):
                 (M1 + M2)*G*sin(state[2]))/den2
 
         return dydx
-        
+
     # th1 and th2 are the initial angles (degrees)
     # L1 and L2 are the length of the pendulum arms
     L1, L2, th1, th2 = get_angle(*start_pos)

@@ -27,14 +27,14 @@ def plot_time(i, x_1, y_1, x_2, y_2, x_3, y_3, line, ax):
 
 def make_plot(x_1, y_1, x_2, y_2, x_3, y_3, limit=200, save=False, path=None ):
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=False, ylim=(-2500, 0), xlim=(0, 2500))
+    ax = fig.add_subplot(111, autoscale_on=False, ylim=(-2, 2), xlim=(-2, 2))
     ax.set_facecolor('black')
     line, = ax.plot([],[], 'o-', lw=2)
     fargs = (x_1[:limit], y_1[:limit], x_2[:limit], y_2[:limit], x_3[:limit], y_3[:limit], line, ax,)
     ani = FuncAnimation(fig, plot_time, np.arange(1, len(fargs[0])),
-                        interval=2, blit=True, fargs=fargs)
+                        interval=16.6, blit=True, fargs=fargs)
     plt.show()
-    
+
     if save:
         if (path == None):
             print('Failed to specify path')

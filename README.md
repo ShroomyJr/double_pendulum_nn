@@ -26,6 +26,33 @@ To visualize the csv data, the `make_plot.py` file can be used to generate an an
 
 > While plotting, it's become apparent that the data needed to be rotated 90 degrees to match the original footage
 
-# Deriving the Physics-guided model
+## Deriving the Physics-guided model
 
-We're looking to derive a way to represent the pendulum in a way that will fit more simply
+As the double pendulum is a simple physical system, very little information is required to derive the anticipated position of the pendulum.
+
+The original dataset provided by IBM captures pixel-position data for the three points on the double pendulum. To calculate how the pendulum will continue moving from any given point we need six values:
+
+1.  θ<sub>1</sub>: angle between limb 1 and the vertical axis
+2.  θ<sub>2</sub>: angle between limb 2 and the vertical axis
+3.  M<sub>1</sub>: mass of bob 1
+4.  M<sub>2</sub>: mass of bob 2
+5.  v<sub>1</sub>: speed of the center of mass of bob 1
+6.  v<sub>2</sub>: speed of the center of mass of bob 2
+
+To obtain the angles from our original position data, we first obtain the length of both pendulum arms through:
+
+-   L<sub>1</sub> = dist{(x<sub>1</sub>, x<sub>2</sub>), (y<sub>1</sub>, y<sub>2</sub>)}
+-   L<sub>2</sub> = dist{(x<sub>2</sub>, x<sub>3</sub>), (y<sub>2</sub>, y<sub>3</sub>)}
+
+From here we can calculate θ<sub>1</sub> & θ<sub>2</sub>:
+
+-   θ<sub>1</sub>: arcsin((y<sub>2</sub> - y<sub>1</sub>)/L<sub>1</sub>) + Π/2
+-   θ<sub>2</sub>: arcsin((y<sub>2</sub> - y<sub>1</sub>)/L<sub>1</sub>)
+
+To generate the data set that will be used for training the network, we'll use `scipy`'s integrate function to derive the momenta and theta values for each time stamp. After having generated the theta values for each time interval, they can be translated back into x and y values in the same form as the original real life dataset.
+
+## The Neural Network
+
+The design of the network will be a recurrent backpropagation network. For each time step, the outputs of the network will become the new inputs. Additionally, two nodes for mass will be used when training the network. Due to an inability to model real world double pendulums' mass in a way that is easily modellable, I hope that this will allow the network to train towards an accurate representation of the real world pendulum. These mass values will hopefully be able to be ignored using they're constant weight over the period as a sort of dynamic bias value. A diagram of the proposed network can be seen below:
+
+![NN Map](./IMG/network_diagram.png)
