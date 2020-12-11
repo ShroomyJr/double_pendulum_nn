@@ -1,5 +1,4 @@
 import sys
-import csv
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
@@ -26,7 +25,7 @@ def plot_time(i, x_1, y_1, x_2, y_2, x_3, y_3, line, ax):
     # patches = [ax.add_patch(c0), ax.add_patch(c1), ax.add_patch(c2), line]
     # return patches
 
-def make_plot(x_1, y_1, x_2, y_2, x_3, y_3, path, limit=200):
+def make_plot(x_1, y_1, x_2, y_2, x_3, y_3, limit=200, save=False, path=None ):
     fig = plt.figure()
     ax = fig.add_subplot(111, autoscale_on=False, ylim=(-2500, 0), xlim=(0, 2500))
     ax.set_facecolor('black')
@@ -35,25 +34,12 @@ def make_plot(x_1, y_1, x_2, y_2, x_3, y_3, path, limit=200):
     ani = FuncAnimation(fig, plot_time, np.arange(1, len(fargs[0])),
                         interval=2, blit=True, fargs=fargs)
     plt.show()
-    ani.save(path, writer='imagemagick', fps=30)
     
+    if save:
+        if (path == None):
+            print('Failed to specify path')
+            return
+        ani.save(path, writer='imagemagick', fps=30)
 
-def unpack_csv(path):
-    with open(path, newline='') as csvfile:
-        position_reader = csv.reader(csvfile)
-        x_1, x_2, x_3 = [], [], []
-        y_1, y_2, y_3 = [], [], []
-        for row in position_reader:
-            y_1.append(-int(row[0]))
-            x_1.append(int(row[1]))
-            y_2.append(-int(row[2]))
-            x_2.append(int(row[3]))
-            y_3.append(-int(row[4]))
-            x_3.append(int(row[5]))
-        
-        return x_1, y_1, x_2, y_2, x_3, y_3
-
-x_1, y_1, x_2, y_2, x_3, y_3 = unpack_csv('./dataset/dpc_csv/0.csv')   
-make_plot(x_1, y_1, x_2, y_2, x_3, y_3, './IMG/pendulum_0_rotated.gif')
 
     
