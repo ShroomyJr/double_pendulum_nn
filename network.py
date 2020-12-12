@@ -12,7 +12,7 @@ import numpy as np
 -   P Hidden Nodes
 -   Training Input: Training set is inputed 
 '''
-class xor_backprop (object):
+class RNN (object):
     def __init__(self, n, p, m):
         self.n = n #Input Nodes
         self.p = p #Hidden Layer Nodes
@@ -44,7 +44,7 @@ class xor_backprop (object):
         return 0.5*(1 + x)*(1 - x)
 
     def relu(self, x):
-        return max([0, x])
+        return max([-2, x])
 
     def feed_forward(self, x):
         z = []
@@ -68,7 +68,7 @@ class xor_backprop (object):
             y.append(y_j)
         return z, y
 
-    def train(self, training_set, learning_rate, epochs, time_steps):
+    def train(self, training_set, time_steps, learning_rate=0.5, epochs=1000):
         total_error = []
         for epoch in range(epochs):
             epoch_error = 0
@@ -78,14 +78,14 @@ class xor_backprop (object):
             delta_w = [[0 for j in range(self.m)] for i in range(self.p + 1)]
             delta_v = [[0 for j in range(self.p)] for i in range(self.n + 1)]
             # For each time step
-            for time in range(time_steps):
+            for time in range(1, time_steps):
                 # Feedforward (passes X to the Hidden Layer)
                 z, y = self.feed_forward(x)
                 # Set the next input to be the output at the previous timestep
                 x = y
                 # Set the target value to be the value at the next time step
-                t = training_set[time+1]
-
+                t = training_set[time]
+                
                 #Backpropogation of error
                 error = []
 
@@ -121,6 +121,6 @@ class xor_backprop (object):
             self.w = np.add(self.w, delta_w)
             self.v = np.add(self.v, delta_v)
                 
-            # print('Epoch', epoch, 'Squared Error', epoch_error)
-            total_error.append(epoch_error/len(list(training_set.keys())))
+            print('Epoch', epoch, 'Squared Error', epoch_error)
+            total_error.append(epoch_error/time_steps)
         return total_error

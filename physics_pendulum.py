@@ -10,7 +10,7 @@ G = 9.8  # acceleration due to gravity, in m/s^2
 # create a time array from 0..100 sampled at 0.05 second steps
 dt = 0.0166
 t = np.arange(0.0, 10, dt)
-print(t)
+# print(len(t))
 
 
 def get_angle(x_1, y_1, x_2, y_2, x_3, y_3):
