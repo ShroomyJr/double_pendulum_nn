@@ -20,19 +20,31 @@ from network import RNN
 
 # Retrieve training data
 
-training_set = read_csv_for_network('./dataset/physics_model/0.csv')
+training_set = read_csv_for_network('./dataset/physics_model/0_cropped.csv')
+print(training_set[0])
 
 # Train the Network on Physics Generated Dataset
-network = RNN(6, 4, 6)
+network = RNN(4, 2, 4)
 network.nguyen_widrow()
-print(network.train(training_set, len(training_set)))
+print(len(training_set))
+
+error = network.train(training_set, len(training_set), epochs=100)
+print(error)
+print(np.array(network.w))
+print(np.array(network.v))
+plt.plot(error)
+plt.ylabel('Error')
+plt.xlabel('# of Epochs')
+plt.ylim([0, 10])
+plt.show()
+"""
 # print(np.array(network.w))
 
 # Generate Output from Trained Network On Singular Dataset
 network_output = [[] for i in range(6)]
 x = training_set[0]
 for t in range(1, len(training_set)):
-    _, y = network.feed_forward(x)
+    _, y = network.feed_forward(training_set[t])
     x = y
     # print(y)
     network_output[0].append(y[0])
@@ -43,5 +55,4 @@ for t in range(1, len(training_set)):
     network_output[5].append(y[5])
 
 # write_csv(network_output, './dataset/results/0.csv')
-
-make_plot(*network_output)
+make_plot(*network_output)"""

@@ -41,5 +41,11 @@ def make_plot(x_1, y_1, x_2, y_2, x_3, y_3, limit=200, save=False, path=None ):
             return
         ani.save(path, writer='imagemagick', fps=30)
 
-
+def plot_frame(x_1, y_1, x_2, y_2, x_3, y_3):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, autoscale_on=False, ylim=(-2, 2), xlim=(-2, 2))
+    ax.set_facecolor('black')
+    line, = ax.plot([x_1, x_2, x_3], [y_1, y_2, y_3])
+    plt.show()
+    return
     
