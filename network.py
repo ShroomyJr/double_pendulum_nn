@@ -34,7 +34,7 @@ class RNN (object):
     def sigmoid(self, x):
         x = np.clip(x, -1000, 1000)
         # x = x/10
-        return (1/(1 + np.exp(-x))) - 1
+        return (2/(1 + np.exp(-x))) - 1
     
     def normalize(self, x, x_i):
         # Normalize the data to within [-1, 1]
@@ -42,7 +42,7 @@ class RNN (object):
 
     # Expects x to already have been put through the sigmoid function
     def sigmoid_prime(self, x):
-        return (1 + x)*(1 - x)
+        return 0.5*(1 + x)*(1 - x)
 
     def relu(self, x):
         return max([-2, x])
@@ -56,6 +56,7 @@ class RNN (object):
 
     def feed_forward(self, x):
         z = []
+        # print(len(x))
         # Forward through hidden layer
         for j in range(self.p):
             z_in = self.v[0][j]
@@ -86,30 +87,35 @@ class RNN (object):
         for epoch in range(epochs):
             epoch_error = 0
             # The initial input value is the starting position
-            x = training_set[0]
+            xpos = training_set[0]
+            x = [-1 for i in range(self.n)]
+            x[int(xpos[0] + xpos[1]*12)] = 1
+            x[int(xpos[2] + xpos[3]*12)] = 1
             # Weight corrections are computed and then averaged over the # of timesteps
             delta_w = [[0 for j in range(self.m)] for i in range(self.p + 1)]
             delta_v = [[0 for j in range(self.p)] for i in range(self.n + 1)]
             # For each time step
             for time in range(1, time_steps):
+                # print("Time Step:", time)
                 # Feedforward (passes X to the Hidden Layer)
                 z, y = self.feed_forward(x)
-                z_t, y_t = self.feed_forward(training_set[time])
                 # Set the next input to be the output at the previous timestep
                 x = y
                 # print(y)
                 # Set the target value to be the value at the next time step
-                t = training_set[time]
-                
+                tpos = training_set[time]
+                t = [-1 for i in range(self.n)]
+                t[int(tpos[0] + tpos[1]*12)] = 1
+                t[int(tpos[2] + tpos[3]*12)] = 1
                 #Backpropogation of error
                 error = []
 
                 # Step 6 - Calculate Error Factor on Weights Between
                 #          Hidden Layer and Output
                 for k in range(self.m): 
-                    epoch_error += (t[2] - y[2])**2
+                    epoch_error += (t[0] - y[0])**2
                     # error_k = self.distance(y[k], t[k])
-                    error_k = (.5*((t[k] - y[k]) + (t[k]-y_t[k])))*self.sigmoid_prime(y[k])
+                    error_k = (t[k] - y[k])*self.sigmoid_prime(y[k])
                     # Calculate weight correction terms
                     for j in range(1, self.p + 1):
                         delta_w[j][k] += learning_rate*error_k*z[j-1]
@@ -123,7 +129,7 @@ class RNN (object):
                 for j in range(1, 1 + self.p):
                     # Sum Delta Inputs for each hidden Unit
                     error_in = error[0]*self.w[j][0]
-                    error_j = error_in * self.sigmoid_prime(z[j-1])
+                    error_j = error_in * self.sigmoid_prime(z[j-1])                    
                     # Calculate wieght correction term for hidden-layer node
                     # i.e. V[1][0] & V[2][0] for Z_1
                     for i in range(1, self.n + 1):
@@ -137,6 +143,8 @@ class RNN (object):
             self.w = np.add(self.w, delta_w)
             self.v = np.add(self.v, delta_v)
                 
-            # print('Epoch', epoch, 'MSE', epoch_error/time_steps)
+            print('Epoch', epoch, 'Total Error', epoch_error)
             total_error.append(epoch_error/time_steps)
+            if (epoch > 10 and total_error[-1] > total_error[-2]*1.001):
+                return total_error
         return total_error
