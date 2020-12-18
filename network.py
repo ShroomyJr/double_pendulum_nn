@@ -20,6 +20,7 @@ class RNN (object):
         self.m = m # Output Layer Nodes
         self.v = [[random.uniform(-0.5, 0.5) for j in range(p)] for i in range(n + 1)]
         self.w = [[random.uniform(-0.5, 0.5) for j in range(m)] for i in range(p + 1)]
+        self.u = [[random.uniform(-0.5, 0.5) for j in range(p)] for i in range(p + 1)]
 
     def nguyen_widrow(self):
         scale = 0.7*np.power(self.p, 1/self.n)
@@ -100,7 +101,7 @@ class RNN (object):
                 z, y = self.feed_forward(training_set[time-window:time])
                 # z_t, y_t = self.feed_forward(training_set[time])
                 # Set the next input to be the output at the previous timestep
-                x = y
+                x = training_set[time-window:time]
                 # print(y)
                 # Set the target value to be the value at the next time step
                 t = training_set[time]
@@ -140,8 +141,8 @@ class RNN (object):
             # Step 8 - Update Weights after all timesteps
             self.w = np.add(self.w, delta_w)
             self.v = np.add(self.v, delta_v)
-            if epoch > 10 and abs(epoch_error/time_steps - total_error[-1]) < 0.001:
-                break
+            # if epoch > 10 and abs(epoch_error/time_steps - total_error[-1]) < 0.001:
+            #     break
             print('Epoch', epoch, '\tMSE', epoch_error/time_steps)
             total_error.append(epoch_error/time_steps)
 
