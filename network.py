@@ -45,7 +45,10 @@ class RNN (object):
         return (1 + x)*(1 - x)
 
     def relu(self, x):
-        return max([-2, x])
+        if x < -2 or x > 2:
+            return 0
+        return x 
+        
 
     def bounded(x, low=-2, hi=2):
         return min([max([-2, x]), 2])
@@ -55,6 +58,7 @@ class RNN (object):
         # return sum([(t[i] - y[i])**2 for i in range(len(y))])
 
     def feed_forward(self, x):
+        # print(x)
         z = []
         # Forward through hidden layer
         for j in range(self.p):
@@ -81,7 +85,7 @@ class RNN (object):
         # Return position data from hidden & output layers
         return z, y
 
-    def train(self, training_set, time_steps, learning_rate=0.05, epochs=1000):
+    def train(self, training_set, time_steps, learning_rate=0.05, epochs=1000, window=4):
         total_error = []
         for epoch in range(epochs):
             epoch_error = 0
@@ -91,10 +95,10 @@ class RNN (object):
             delta_w = [[0 for j in range(self.m)] for i in range(self.p + 1)]
             delta_v = [[0 for j in range(self.p)] for i in range(self.n + 1)]
             # For each time step
-            for time in range(1, time_steps):
+            for time in range(window, time_steps):
                 # Feedforward (passes X to the Hidden Layer)
-                z, y = self.feed_forward(x)
-                z_t, y_t = self.feed_forward(training_set[time])
+                z, y = self.feed_forward(training_set[time-window:time])
+                # z_t, y_t = self.feed_forward(training_set[time])
                 # Set the next input to be the output at the previous timestep
                 x = y
                 # print(y)
@@ -107,9 +111,9 @@ class RNN (object):
                 # Step 6 - Calculate Error Factor on Weights Between
                 #          Hidden Layer and Output
                 for k in range(self.m): 
-                    epoch_error += (t[2] - y[2])**2
+                    epoch_error += (t - y[0])**2
                     # error_k = self.distance(y[k], t[k])
-                    error_k = (.5*((t[k] - y[k]) + (t[k]-y_t[k])))*self.sigmoid_prime(y[k])
+                    error_k = ((t - y[k])**2)*self.sigmoid_prime(y[k])
                     # Calculate weight correction terms
                     for j in range(1, self.p + 1):
                         delta_w[j][k] += learning_rate*error_k*z[j-1]
@@ -136,7 +140,10 @@ class RNN (object):
             # Step 8 - Update Weights after all timesteps
             self.w = np.add(self.w, delta_w)
             self.v = np.add(self.v, delta_v)
-                
-            # print('Epoch', epoch, 'MSE', epoch_error/time_steps)
+            if epoch > 10 and abs(epoch_error/time_steps - total_error[-1]) < 0.001:
+                break
+            print('Epoch', epoch, '\tMSE', epoch_error/time_steps)
             total_error.append(epoch_error/time_steps)
+
+            
         return total_error

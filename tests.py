@@ -20,22 +20,43 @@ from network import RNN
 
 # Retrieve training data
 
-training_set = read_csv_for_network('./dataset/physics_model/0_cropped.csv')
-print(training_set[0])
+# training_set = read_csv_for_network('./dataset/physics_model/0_cropped.csv')
+# # training_set = unpack_csv('./dataset/physics_model/0.csv')
+# print(training_set[0])
 
-# Train the Network on Physics Generated Dataset
-network = RNN(4, 2, 4)
-network.nguyen_widrow()
-print(len(training_set))
+# # Train the Network on Physics Generated Dataset
+# network = RNN(2, 20, 2)
+# network.nguyen_widrow()
+# print(len(training_set))
 
-error = network.train(training_set, len(training_set), epochs=100)
-print(error)
-print(np.array(network.w))
-print(np.array(network.v))
+# # error = network.train(training_set, len(training_set), epochs=100)
+# # print(error)
+# print(np.array(network.w))
+# print(np.array(network.v))
+# plt.plot(training_set[4])
+# plt.ylabel('Error')
+# plt.xlabel('# of Epochs')
+# # plt.ylim([0, 10])
+# plt.show()
+
+training_set = read_csv_for_network('./dataset/physics_model/0_cropped.csv')[:600]
+training_set = [row[2] for row in training_set]
+
+# Clip Into 6 training sets
+training_set = [training_set[i*100:i*100+100] for i in range(6)]
+training_set = [[[x] for x in group] for group in training_set]
+print(len(training_set[0]))
+# print(training_set)
+x_network = RNN(1, 100, 1)
+x_network.nguyen_widrow()
+x_network.n
+print(x_network.n)
+print(x_network.v[0][1])
+# Train Network on First Training Set
+error = x_network.train(training_set[0], 100)
 plt.plot(error)
 plt.ylabel('Error')
 plt.xlabel('# of Epochs')
-plt.ylim([0, 10])
 plt.show()
 """
 # print(np.array(network.w))
