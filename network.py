@@ -76,6 +76,7 @@ class RNN (object):
         # print(z)
         h_t = np.add(z, np.dot(self.u, self.h))
         h_t = [self.sigmoid(x) for x in h_t]
+        self.h = h_t
         # h_t = np.dot(self.u, self.h)
         # print('ht')
         # print(h_t)
@@ -166,7 +167,8 @@ class RNN (object):
             self.v = np.add(self.v, delta_v)
             self.h = np.add(self.h, delta_h)
 
-            print('Epoch', epoch, '\tMSE', epoch_error/time_steps)
+            if epoch % 100 == 0:
+                print('Epoch', epoch, '\tMSE', epoch_error/time_steps)
             total_error.append(epoch_error/time_steps)
 
             
