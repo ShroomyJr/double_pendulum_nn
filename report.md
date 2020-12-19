@@ -32,7 +32,7 @@ Backpropagation over MLPs has been shown to be able to model functions with cons
 
 To implement this design, the network is passed a dataset generated from a physics-based model describing the motion of a simulated pendulum for 60 seconds. Once the network has been sufficiently trained on the artificial model, it can be passed the real-life data at a lower learning rate. Real-life data proves to be more chaotic than the output from the physics generated model, and a lower learning rate will prevent outliers in real-life movement from damaging the models ability to predict. 
 
-![Network Diagram](./IMG/Data_flow.png)
+<!-- ![Network Diagram](./IMG/Data_flow.png) -->
 
 The design is implemented using the following tools and hardware:
 
@@ -52,7 +52,7 @@ The design is implemented using the following tools and hardware:
 ## Data Set
 The network will be trained using a IBM's "Double Pendulum Chaotic" dataset that features position data measured from various real-life recordings of a double pendulum. A frame from one of these recordings is included below:
 
-![Real Double Pendulum Gif](./IMG/real_pendulum_frame.png)
+<!-- ![Real Double Pendulum Gif](./IMG/real_pendulum_frame.png) -->
 
 > Real time footage is available from IBM's repository linked in the bibliography.
 
@@ -126,14 +126,14 @@ def derivs(state, t):
 ```
 
 Here's an example of a double pendulum I generated using this method: 
-![Animated Double Pendulum Gif](./IMG/pendulum_animation_frame.png)
+<!-- ![Animated Double Pendulum Gif](./IMG/pendulum_animation_frame.png) -->
 
 ## The Network
 
 ### Originally Proposed Network
 I'll now go into the process of designing the network, the original plan, adaptations that were made, and the final design. The original network design was a multilayer perceptron without iteration of time. Having worked with this type of model in previous work to model the product of two sinusoidal variables, I proposed adapting a similar model to predict the motion of the double pendulum. This original network was also going to be trained using a compound loss function which would combine the difference of the expected position value from the predicted position value with the difference of the expected position value from the physics-guided model. 
 
-![Compound Loss Function](./IMG/combound_loss.png)
+<!-- ![Compound Loss Function](./IMG/combound_loss.png) -->
 
 > Image Credit to Karpatne, Anuj, et al. - (PGNNs)
 
@@ -141,7 +141,7 @@ The use of a physics guided loss function was proposed as a way to maximize the 
 
 When it became apparent that it would no longer be possible to model the movement of the real life dataset using the physics-generated data, the compound loss function had to be abandoned for the purpose of this project. Instead, the network would have to learn the motion of the pendulum through the physics based model and refine it's weights further using the real-life data. The physics model does well to anticipate the motion of a non-chaotic pendulum with well-distributed weight, but real-life conditions make creating accurate predictions quite difficult.
 
-![MLP Diagram](./IMG/MLP_diagram.png)
+<!-- ![MLP Diagram](./IMG/MLP_diagram.png) -->
 >   A diagram describing the model for the MLP can be seen above
 
 Additionally, the requirement that the network should be able to fully generate the arc for a double-pendulum, it became apparent that predicting the next time interval would require output units being passed back to the input units. For this reason, I temporarily stepped away from this design and moved onto the next iteration of this project's design.
@@ -150,7 +150,7 @@ Additionally, the requirement that the network should be able to fully generate 
 
 Further reading about backpropagation networks for unique time steps, it became apparent that a recurrent multilayer neural network would be needed for the project. For this network, the output from each time step would be fed to the input units a the next time step (Fausett). This new network designed would also remain fully connected outside of this change. Adapting the MLP to an RNN required calculating the loss over each time step and then applying the weight changes at the end of each epoch. Each time step would share in the same weights matrix (Fausett).
 
-![RNN Map](./IMG/network_diagram.png)
+<!-- ![RNN Map](./IMG/network_diagram.png) -->
 
 This model had a few issues which I would like to note:
 
@@ -158,7 +158,7 @@ This model had a few issues which I would like to note:
 2. X<sub>1</sub> and X<sub>2</sub> were inputs representing the X and Y coordinate position of the fixed bob on the pendulum. In the physics generated model, they're value would remain zero at all times. On real life data, imperfections in the tracking of position data from video caused them to slightly drift from the origin. Due to the inter-connected nature of the network, they merely functioned as additional noise to the network and should not have been allowed to impact output.
 3.  Inputting all the position data never resulted in any kind of learning from the network. Due to how different each output would be at separate time intervals, it was difficult for the network to learn any kind of pattern to anticipate. The network would instead rapidly converge the weights to 0. Below is an outputted graph highlighting this kind of behavior.
 
-    ![RNN failed training](./IMG/x_2_cord_training_without_h_weights.png)
+    <!-- ![RNN failed training](./IMG/x_2_cord_training_without_h_weights.png) -->
 
     > The blue line indicates the fully predicted recurrent output. The red line is generated output from training data inputed at each time step. Green is the actual graph of the displacement of the second bob along the x axis from the origin.
 
@@ -170,11 +170,11 @@ I took a much more deliberate process to designing the final iteration of this n
 
 One of the first changes I decided to implement was data windowing. I came upon the concept for this idea while reading about time series forecasting on _Tensorflow's_ websites. While I was not using the _Tensorflow_ utility for this project, I was able to learn about better way to leverage the previous timesteps to inform the next prediction. Data windowing entails configuring additional inputs to the network for each time step. These input values will be updated regressively as the network predicts the next time step. Training the network includes a warm-up period of time where the network does not generate any output. Instead, the first set of expected inputs are set for the time window. The input window acts in a FIFO fashion, moving the most recent timestep to the front and removing the oldest.
 
-![Tensorflow Time Windowing](./IMG/time_windowing_tensorflow.png)
+<!-- ![Tensorflow Time Windowing](./IMG/time_windowing_tensorflow.png) -->
 
 Further reading in Data science editorial, _towardsdatascience.com_, lead me to realize that the understanding I had of RNNs from reading in Fausett's textbook was incomplete. Their article title "Recurrent Neural Networks - RNN" described a third additional weights array. This new set of weights, U, between the individual nodes in the hidden layer.
 
-![Deep Learning Book - RNN](./IMG/deeplearning_book_h_matrix.png)
+<!-- ![Deep Learning Book - RNN](./IMG/deeplearning_book_h_matrix.png) -->
 
 The RNN generates the input to each node in the hidden layer in the same way as was described in Fausett's book. However, once the input value to each hidden node is defined, the input is passed through the weights, U, connecting the hidden nodes. The value of h at each time step in the current time window is added to the input value to each h node and passed through the activation function. This serves as the new value that is distributed across the weights connecting the output nodes to the hidden node.
 
@@ -190,7 +190,7 @@ self.h = h_t
 
 The largest change for this network was to divide the network into multiple RNNs, one for each coordinate. As I noted in the last design, the fully connected design for predicting the position of each network proved too difficult for the network to interpret. While it's difficult to anticipate the position of bobs when looking at all the inputs, each coordinate moves in a very similar pattern.  By distributing the task of identifying each coordinate to individual RNNs, we can leverage the rhythmic pattern through which they move. Notice the sinusoidal pattern that the bob's axis move through in the figure below:
 
-![Coordinate Displacement Over Time](./IMG/coordinate_displacement.png)
+<!-- ![Coordinate Displacement Over Time](./IMG/coordinate_displacement.png) -->
 
 The decision to pass the output of these networks into a multi-layer perceptron (MLP) is based in the previously noted ability of an MLP to accurately map the product of two sin functions. Given the similar pattern that these x and y coordinates move, I had anticipated the network being able to correlate the predicted output of the X and Y coordinates together to provide more optimal results.
 
@@ -198,9 +198,133 @@ The decision to pass the output of these networks into a multi-layer perceptron 
 
 A diagram demonstrating the design of each RNN is visible below:
 
-![RNN Diagram](./IMG/RNN_diagram.png)
+<!-- ![RNN Diagram](./IMG/RNN_diagram.png) -->
 > The same network design is used for each of the 4 coordinate values: X<sub>1</sub>, Y<sub>1</sub>, X<sub>2</sub>, and Y<sub>2</sub>.
 
 ## Results
 
-Training proved to be a long and arduous process for the network, especially early on before use of the weights between nodes in the hidden layer. I began by testing the RNN design on the displacement of the X<sub>2</sub> bob. 
+Training proved to be a long and arduous process for the network, especially early on before use of the weights between nodes in the hidden layer. I began by testing the RNN design on the displacement of the X<sub>2</sub> bob. At this point, the network failed to generate any kind of learning response to the training set. 
+
+<!-- ![X coordinate training failure](./IMG/x_2_cord_training_output.png) -->
+
+As you can see from the generated output, the network was unable to model any kind of response resembling the path of the X<sub>2</sub> bob over a training period of 1000 epochs and a learning rate of 0.001.
+
+Originally, I began to think that the issue with the learning came from the path of the pendulum not following a consistent enough arc. In order to provide a training set with more periodic behavior, I generate a sin wave to start debugging.
+
+I began to test the behavior of the network on the sin-wave dataset with different configurations. Originally, I was testing the network on a bounded activation function. The bounded function would output 0 for any output higher or lower than defined min max values. This activation function was easy to backpropagate as the derivative was the same as the activation function. A code snippet of this activation function can be seen below:
+
+```python
+def bounded(x, min, max):
+    if x > max or x < min:
+        return 0
+    else x
+```
+
+Unfortunately, I was seeing the same result as before. All the weights would rapidly approach zero and minimize any output value.
+My next attempt was to use a sigmoid function ranging between -1 and 1 for training the network. The sigmoid was the same activation function that I used in training a MLP to learn a sin-wave before, and I had hoped this would perform well for this application. However, I had to normalize my data to this range using a scaling function to take advantage of the sigmoid.
+
+The following code was used for scaling data, and applying the sigmoid function and it's derivative:
+```python
+def scale(value,min_r, max_r, min_t, max_t):
+    return (value-min_r)/(max_r-min_r)*(max_t-min_t)+min_t
+
+def sigmoid(self, x):
+    x = np.clip(x, -1000, 1000)
+    return (2/(1 + np.exp(-x))) - 1
+
+# Expects x to already have been put through the sigmoid function
+def sigmoid_prime(self, x):
+    return .5*(1 + x)*(1 - x)
+```
+
+Using this change, I tried testing the network on the sin based dataset to the following result:
+
+<!-- ![Sin Wave No U Weights - Error](./IMG/sin_wave_no_u.png) -->
+
+<!-- ![Sin Wave No U Weights - Displacement](./IMG/Sin_wave_no_u_displacement.png) -->
+
+As you can see, the network was able to very accurately model this wave. Final epoch error was down to an MSE of 0.0048 on the 1900th epoch. 
+>   The network was configured using the following configurations:
+>   
+>   -   Learning Rate: 0.001 
+>   -   Time Steps = 100
+>   -   Data Window = 4
+>   -   Epochs = 2000
+>   -   4 Input Nodes
+>   -   4 Hidden Nodes
+>   -   1 Output Node
+>   -   Nguyen Widrow initialization
+
+Having felt confident from these results, I moved on back to the X coordinate dataset. Unfortunately, the network still struggled to model the less periodic movement of the double pendulum. Additionally, it appears that the data was overfitting the weights. The network was able to return a pattern similar to the original data when inputting the training set data at each time step. However, the network was unable to create a continuous pattern following the pendulum's path when it had to use the output as the next input.
+
+<!-- ![Overfitted Data](./IMG/x_2_cord_training_improved.png) -->
+
+>   The network was configured using the following configurations:
+>   
+>   -   Learning Rate: 0.001 
+>   -   Time Steps = 100
+>   -   Data Window = 4
+>   -   Epochs = 2000
+>   -   4 Input Nodes
+>   -   2 Hidden Nodes
+>   -   1 Output Node
+>   -   Nguyen Widrow initialization
+
+Moving forward from this pattern of result took a long time. For a long period of development, I was under the assumption that something was wrong with my activation function or my backpropagation of error. However, after many days worth of work put into correcting the data, I learned about configuring the network with the _U_ weights matrix between each of the hidden nodes.
+
+Fortunately, implementing the RNN structure I described in the "Final Design" section of this report, I saw a lot more success in modeling the data.
+
+Using the same network configuration as described for the previous results, I was able to much more closely model the path of the X<sub>2</sub> bob.
+
+<!-- ![Improved X 2 Bob](./IMG/x_2_cord_h_4_2_1.png) -->
+
+As you can see, the predicted motion was much more akin to the movement of the bob. The network was beginning to learn. Now I need to narrow down the configuration that would provide the best possible results. I was looking to beat the MSE in the graph below:
+
+<!-- ![MSE Improved X 2 Bob](./IMG/x_2_cord_h_4_2_1_mse.png) -->
+
+I next began testing the network using an additional third hidden node and allowing the network to run for 1500 epochs. The final epoch error was 0.19. In all the approaches that I tested, this was the most accurate model I was able to find that did not overfit the data and still was able to provide accurate prediction after training. I have tested up to 5000 epochs, and the network error will reduce down to even 0.001 MSE. However, the networks ability to predict motion with only the warmup period being from the testing data decays after 1500 epochs of training in this way.
+
+The final optimal network configuration that I was able to find in my testing was:
+
+>   -   Learning Rate: 0.001 
+>   -   Time Steps = 100
+>   -   Data Window = 4
+>   -   Epochs = 1500
+>   -   4 Input Nodes
+>   -   3 Hidden Nodes
+>   -   1 Output Node 
+>   -   No Nguyen Widrow initialization
+
+Below is the generated path from the X<sub>1</sub> coordinate, the MSE after training 4 RNNs in this method (one for each coordinate), and the MSE for just training X<sub>1</sub> in this way.
+
+![X_1 Final MSE](./IMG/x_1_final.png)
+
+![X_1 Final Movement](./IMG/x_1_final_movement.png)
+
+![MSE All Bobs](./IMG/MSE_all_bobs.png)
+>   Notice that all bobs do not converge in the same way. Bob 1 has the least amount of motion on the Y access out of all bobs and trained worse at the beginning. Bob 2 never reaches an MSE as low as Bob 1 using this configuration.
+>
+> It is most likely true that each coordinate needs to be tweaked individually to most optimally predict motion of the bobs.
+## Conclusion
+
+Recurrent Neural Networks have show to have the ability to form powerful models at approximating complex motions. They succeed where earlier MLP designs have struggled at backpropagation over time. The design presented in this paper demonstrated the importance of providing such a network a short term memory through the stored values in the hidden layer. Doing so enables the network to more accurately predict sudden changes in direction and provides more information for adjusting weights during training. Data Windowing provides another powerful technique for time series forecasting. In combination with a robust training set and short term memory, this method could be demonstrated to great effect.
+
+Additionally, the testing and iterative design process described in this paper demonstrates the importance of separating data into relevant groups. Unsupervised learning allows neural networks to provide quickly adapting models, but important care must be put into selecting the relevant data for training. 
+
+Unfortunately, this design was not able to be fully implemented due to time limitations. However, early training on the model proved to be promising. With additional optimization, I remain hopeful that the proposed design for predicting the motion of double pendulums will be successful someday. 
+
+
+## Bibliography
+1.  Fausett, Laurene V. Fundamentals of neural networks: architectures, algorithms and applications. Pearson Education India, 2006.Fraser, S.. “Movement Prediction of Three Bouncing Balls.” (2018).
+1. Karpatne, Anuj, et al. "Physics-guided neural networks (pgnn): An application in lake temperature modeling." arXiv preprint arXiv:1710.11431 (2017).
+8.  Shi, Xingjian, et al. "Convolutional LSTM network: A machine learning approach for precipitation nowcasting." Advances in neural information processing systems 28 (2015): 802-810.
+9.  http://www.diva-portal.se/smash/get/diva2:1267392/FULLTEXT01.pdf
+11. https://www.tensorflow.org/tutorials/structured_data/time_series
+12. https://stats.stackexchange.com/questions/8000/proper-way-of-using-recurrent-neural-network-for-time-series-analysis
+13. https://towardsdatascience.com/recurrent-neural-networks-rnns-3f06d7653a85
+1.  https://en.wikipedia.org/wiki/Double_pendulum
+2.  https://en.wikipedia.org/wiki/Kinetic_energy
+3.  https://developer.ibm.com/exchanges/data/all/double-pendulum-chaotic/
+4.  https://matplotlib.org/3.1.1/gallery/animation/double_pendulum_sgskip.html
+5.  https://openreview.net/pdf?id=HylajWsRF7
+6.  http://www.ar.sanken.osaka-u.ac.jp/~inazumi/data/furiko.html
