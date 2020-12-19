@@ -23,6 +23,7 @@ class RNN (object):
         self.w = [[random.uniform(-2, 2) for j in range(m)] for i in range(p + 1)]
         # Hidden-to-hidden recurrent weights
         self.u = [random.uniform(-2, 2) for i in range(p)]
+        # Short Term Memory for hidden nodes
         self.h = [0 for i in range(p)]
 
     def nguyen_widrow(self):
@@ -69,17 +70,12 @@ class RNN (object):
             z_in = self.normalize(x, z_in)
             # Apply activation function
             z_j = self.sigmoid(z_in)
-            # z_j = z_in
             # Append to Z in order to broadcast to next layer
             z.append(z_j)
         # Hidden State Interaction
-        # print(z)
         h_t = np.add(z, np.dot(self.u, self.h))
         h_t = [self.sigmoid(x) for x in h_t]
         self.h = h_t
-        # h_t = np.dot(self.u, self.h)
-        # print('ht')
-        # print(h_t)
         y = []
         # Forward through outputs
         for k in range(self.m):
@@ -112,7 +108,6 @@ class RNN (object):
                 self.h = h_t
                 # Set the next input to be the output at the previous timestep
                 x = training_set[time-window:time]
-                # print(y)
                 # Set the target value to be the value at the next time step
                 t = training_set[time]
                 
@@ -156,7 +151,6 @@ class RNN (object):
             # Step 8 - Update Weights after all timesteps
             #          Weights are batch updated
             # Average Weight corrections by timestamps
-            # print(delta_w)
             # delta_w = np.divide(delta_w, time_steps)
             # delta_v = np.divide(delta_v, time_steps)
             # delta_h = np.divide(delta_h, time_steps)

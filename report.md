@@ -32,7 +32,7 @@ Backpropagation over MLPs has been shown to be able to model functions with cons
 
 To implement this design, the network is passed a dataset generated from a physics-based model describing the motion of a simulated pendulum for 60 seconds. Once the network has been sufficiently trained on the artificial model, it can be passed the real-life data at a lower learning rate. Real-life data proves to be more chaotic than the output from the physics generated model, and a lower learning rate will prevent outliers in real-life movement from damaging the models ability to predict. 
 
-<!-- ![Network Diagram](./IMG/Data_flow.png) -->
+![Network Diagram](./IMG/Data_flow.png)
 
 The design is implemented using the following tools and hardware:
 
@@ -52,7 +52,7 @@ The design is implemented using the following tools and hardware:
 ## Data Set
 The network will be trained using a IBM's "Double Pendulum Chaotic" dataset that features position data measured from various real-life recordings of a double pendulum. A frame from one of these recordings is included below:
 
-<!-- ![Real Double Pendulum Gif](./IMG/real_pendulum_frame.png) -->
+![Real Double Pendulum Gif](./IMG/real_pendulum_frame.png)
 
 > Real time footage is available from IBM's repository linked in the bibliography.
 
@@ -126,14 +126,14 @@ def derivs(state, t):
 ```
 
 Here's an example of a double pendulum I generated using this method: 
-<!-- ![Animated Double Pendulum Gif](./IMG/pendulum_animation_frame.png) -->
+![Animated Double Pendulum Gif](./IMG/pendulum_animation_frame.png)
 
 ## The Network
 
 ### Originally Proposed Network
 I'll now go into the process of designing the network, the original plan, adaptations that were made, and the final design. The original network design was a multilayer perceptron without iteration of time. Having worked with this type of model in previous work to model the product of two sinusoidal variables, I proposed adapting a similar model to predict the motion of the double pendulum. This original network was also going to be trained using a compound loss function which would combine the difference of the expected position value from the predicted position value with the difference of the expected position value from the physics-guided model. 
 
-<!-- ![Compound Loss Function](./IMG/combound_loss.png) -->
+![Compound Loss Function](./IMG/combound_loss.png)
 
 > Image Credit to Karpatne, Anuj, et al. - (PGNNs)
 
@@ -141,7 +141,7 @@ The use of a physics guided loss function was proposed as a way to maximize the 
 
 When it became apparent that it would no longer be possible to model the movement of the real life dataset using the physics-generated data, the compound loss function had to be abandoned for the purpose of this project. Instead, the network would have to learn the motion of the pendulum through the physics based model and refine it's weights further using the real-life data. The physics model does well to anticipate the motion of a non-chaotic pendulum with well-distributed weight, but real-life conditions make creating accurate predictions quite difficult.
 
-<!-- ![MLP Diagram](./IMG/MLP_diagram.png) -->
+![MLP Diagram](./IMG/MLP_diagram.png)
 >   A diagram describing the model for the MLP can be seen above
 
 Additionally, the requirement that the network should be able to fully generate the arc for a double-pendulum, it became apparent that predicting the next time interval would require output units being passed back to the input units. For this reason, I temporarily stepped away from this design and moved onto the next iteration of this project's design.
@@ -150,7 +150,7 @@ Additionally, the requirement that the network should be able to fully generate 
 
 Further reading about backpropagation networks for unique time steps, it became apparent that a recurrent multilayer neural network would be needed for the project. For this network, the output from each time step would be fed to the input units a the next time step (Fausett). This new network designed would also remain fully connected outside of this change. Adapting the MLP to an RNN required calculating the loss over each time step and then applying the weight changes at the end of each epoch. Each time step would share in the same weights matrix (Fausett).
 
-<!-- ![RNN Map](./IMG/network_diagram.png) -->
+![RNN Map](./IMG/network_diagram.png)
 
 This model had a few issues which I would like to note:
 
@@ -158,7 +158,7 @@ This model had a few issues which I would like to note:
 2. X<sub>1</sub> and X<sub>2</sub> were inputs representing the X and Y coordinate position of the fixed bob on the pendulum. In the physics generated model, they're value would remain zero at all times. On real life data, imperfections in the tracking of position data from video caused them to slightly drift from the origin. Due to the inter-connected nature of the network, they merely functioned as additional noise to the network and should not have been allowed to impact output.
 3.  Inputting all the position data never resulted in any kind of learning from the network. Due to how different each output would be at separate time intervals, it was difficult for the network to learn any kind of pattern to anticipate. The network would instead rapidly converge the weights to 0. Below is an outputted graph highlighting this kind of behavior.
 
-    <!-- ![RNN failed training](./IMG/x_2_cord_training_without_h_weights.png) -->
+    ![RNN failed training](./IMG/x_2_cord_training_without_h_weights.png)
 
     > The blue line indicates the fully predicted recurrent output. The red line is generated output from training data inputed at each time step. Green is the actual graph of the displacement of the second bob along the x axis from the origin.
 
@@ -170,13 +170,27 @@ I took a much more deliberate process to designing the final iteration of this n
 
 One of the first changes I decided to implement was data windowing. I came upon the concept for this idea while reading about time series forecasting on _Tensorflow's_ websites. While I was not using the _Tensorflow_ utility for this project, I was able to learn about better way to leverage the previous timesteps to inform the next prediction. Data windowing entails configuring additional inputs to the network for each time step. These input values will be updated regressively as the network predicts the next time step. Training the network includes a warm-up period of time where the network does not generate any output. Instead, the first set of expected inputs are set for the time window. The input window acts in a FIFO fashion, moving the most recent timestep to the front and removing the oldest.
 
-<!-- ![Tensorflow Time Windowing](./IMG/time_windowing_tensorflow.png) -->
+![Tensorflow Time Windowing](./IMG/time_windowing_tensorflow.png)
 
 Further reading in Data science editorial, _towardsdatascience.com_, lead me to realize that the understanding I had of RNNs from reading in Fausett's textbook was incomplete. Their article title "Recurrent Neural Networks - RNN" described a third additional weights array. This new set of weights, U, between the individual nodes in the hidden layer.
 
-<!-- ![Deep Learning Book - RNN](./IMG/deeplearning_book_h_matrix.png) -->
+![Deep Learning Book - RNN](./IMG/deeplearning_book_h_matrix.png)
 
 The RNN generates the input to each node in the hidden layer in the same way as was described in Fausett's book. However, once the input value to each hidden node is defined, the input is passed through the weights, U, connecting the hidden nodes. The value of h at each time step in the current time window is added to the input value to each h node and passed through the activation function. This serves as the new value that is distributed across the weights connecting the output nodes to the hidden node.
+
+Unlike the other weight matrices for the network, _U_ is not fully connected. There is one weight in _U_ connecting each hidden node _h_ to the hidden node _h_(t+1). This can be seen in the form of the weight matrices when they're initialized for the network in the following code snippet:
+```python
+def __init__(self, n, p, m):
+    self.n = n #Input Nodes
+    self.p = p #Hidden Layer Nodes
+    self.m = m # Output Layer Nodes
+    self.v = [[random.uniform(-2, 2) for j in range(p)] for i in range(n + 1)]
+    self.w = [[random.uniform(-2, 2) for j in range(m)] for i in range(p + 1)]
+    # Hidden-to-hidden recurrent weights
+    self.u = [random.uniform(-2, 2) for i in range(p)]
+    # Short Term Memory for hidden nodes
+    self.h = [0 for i in range(p)]
+```
 
 The code snippet from the feed_forward algorithm that implements this step can be seen below:
 ```python
@@ -188,9 +202,22 @@ h_t = [self.sigmoid(x) for x in h_t]
 self.h = h_t
 ```
 
+Backpropagation for the U weight matrix is done in the following code snippet:
+
+```python
+ # Step 8 - Distribute error across Hidden Layer Weights
+for j in range(1, self.p):
+    error_in = error[0]*self.w[j][0]
+    error_j = error_in * self.sigmoid_prime(z[j-1])
+    # Weight correction term for hidden-to-hidden
+    for l in range(1, self.p):
+        delta_h[l][j-1] += learning_rate*error_j*h_t[l-1]
+    delta_h[0][j-1] += learning_rate*error_j
+```
+
 The largest change for this network was to divide the network into multiple RNNs, one for each coordinate. As I noted in the last design, the fully connected design for predicting the position of each network proved too difficult for the network to interpret. While it's difficult to anticipate the position of bobs when looking at all the inputs, each coordinate moves in a very similar pattern.  By distributing the task of identifying each coordinate to individual RNNs, we can leverage the rhythmic pattern through which they move. Notice the sinusoidal pattern that the bob's axis move through in the figure below:
 
-<!-- ![Coordinate Displacement Over Time](./IMG/coordinate_displacement.png) -->
+![Coordinate Displacement Over Time](./IMG/coordinate_displacement.png)
 
 The decision to pass the output of these networks into a multi-layer perceptron (MLP) is based in the previously noted ability of an MLP to accurately map the product of two sin functions. Given the similar pattern that these x and y coordinates move, I had anticipated the network being able to correlate the predicted output of the X and Y coordinates together to provide more optimal results.
 
@@ -198,14 +225,49 @@ The decision to pass the output of these networks into a multi-layer perceptron 
 
 A diagram demonstrating the design of each RNN is visible below:
 
-<!-- ![RNN Diagram](./IMG/RNN_diagram.png) -->
+![RNN Diagram](./IMG/RNN_diagram.png)
 > The same network design is used for each of the 4 coordinate values: X<sub>1</sub>, Y<sub>1</sub>, X<sub>2</sub>, and Y<sub>2</sub>.
+
+The feedforward algorithm that runs through the design in the diagram above can be read below:
+```python
+def feed_forward(self, x):
+    # print(x)
+    z = []
+    # Forward through hidden layer
+    for j in range(self.p):
+        z_in = self.v[0][j]
+        z_in += sum([x[i-1]*self.v[i][j] for i in range(1, self.n + 1)])
+        # Normalize Z_in to bring scale between 
+        z_in = self.normalize(x, z_in)
+        # Apply activation function
+        z_j = self.sigmoid(z_in)
+        # Append to Z in order to broadcast to next layer
+        z.append(z_j)
+    # Hidden State Interaction
+    h_t = np.add(z, np.dot(self.u, self.h))
+    h_t = [self.sigmoid(x) for x in h_t]
+    self.h = h_t
+    y = []
+    # Forward through outputs
+    for k in range(self.m):
+        y_in = self.w[0][k]
+        y_in += sum([h_t[j-1]*self.w[j][k] for j in range(1, self.p + 1)])
+        # Normalize Y_in
+        z_in = self.normalize(z, y_in)
+        # Apply activation function
+        y_j = self.sigmoid(y_in)
+        # y_j = y_in
+        y.append(y_j)
+    # Return position data from hidden & output layers
+    return z, y, h_t
+```
+
 
 ## Results
 
 Training proved to be a long and arduous process for the network, especially early on before use of the weights between nodes in the hidden layer. I began by testing the RNN design on the displacement of the X<sub>2</sub> bob. At this point, the network failed to generate any kind of learning response to the training set. 
 
-<!-- ![X coordinate training failure](./IMG/x_2_cord_training_output.png) -->
+![X coordinate training failure](./IMG/x_2_cord_training_output.png)
 
 As you can see from the generated output, the network was unable to model any kind of response resembling the path of the X<sub>2</sub> bob over a training period of 1000 epochs and a learning rate of 0.001.
 
@@ -239,9 +301,9 @@ def sigmoid_prime(self, x):
 
 Using this change, I tried testing the network on the sin based dataset to the following result:
 
-<!-- ![Sin Wave No U Weights - Error](./IMG/sin_wave_no_u.png) -->
+![Sin Wave No U Weights - Error](./IMG/sin_wave_no_u.png)
 
-<!-- ![Sin Wave No U Weights - Displacement](./IMG/Sin_wave_no_u_displacement.png) -->
+![Sin Wave No U Weights - Displacement](./IMG/Sin_wave_no_u_displacement.png)
 
 As you can see, the network was able to very accurately model this wave. Final epoch error was down to an MSE of 0.0048 on the 1900th epoch. 
 >   The network was configured using the following configurations:
@@ -253,11 +315,11 @@ As you can see, the network was able to very accurately model this wave. Final e
 >   -   4 Input Nodes
 >   -   4 Hidden Nodes
 >   -   1 Output Node
->   -   Nguyen Widrow initialization
+>   -   Nguyen-Widrow initialization
 
 Having felt confident from these results, I moved on back to the X coordinate dataset. Unfortunately, the network still struggled to model the less periodic movement of the double pendulum. Additionally, it appears that the data was overfitting the weights. The network was able to return a pattern similar to the original data when inputting the training set data at each time step. However, the network was unable to create a continuous pattern following the pendulum's path when it had to use the output as the next input.
 
-<!-- ![Overfitted Data](./IMG/x_2_cord_training_improved.png) -->
+![Overfitted Data](./IMG/x_2_cord_training_improved.png)
 
 >   The network was configured using the following configurations:
 >   
@@ -276,11 +338,11 @@ Fortunately, implementing the RNN structure I described in the "Final Design" se
 
 Using the same network configuration as described for the previous results, I was able to much more closely model the path of the X<sub>2</sub> bob.
 
-<!-- ![Improved X 2 Bob](./IMG/x_2_cord_h_4_2_1.png) -->
+![Improved X 2 Bob](./IMG/x_2_cord_h_4_2_1.png)
 
 As you can see, the predicted motion was much more akin to the movement of the bob. The network was beginning to learn. Now I need to narrow down the configuration that would provide the best possible results. I was looking to beat the MSE in the graph below:
 
-<!-- ![MSE Improved X 2 Bob](./IMG/x_2_cord_h_4_2_1_mse.png) -->
+![MSE Improved X 2 Bob](./IMG/x_2_cord_h_4_2_1_mse.png)
 
 I next began testing the network using an additional third hidden node and allowing the network to run for 1500 epochs. The final epoch error was 0.19. In all the approaches that I tested, this was the most accurate model I was able to find that did not overfit the data and still was able to provide accurate prediction after training. I have tested up to 5000 epochs, and the network error will reduce down to even 0.001 MSE. However, the networks ability to predict motion with only the warmup period being from the testing data decays after 1500 epochs of training in this way.
 

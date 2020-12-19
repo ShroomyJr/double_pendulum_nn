@@ -1,3 +1,10 @@
+"""
+This file is just a work space
+For actual results from testing the network, 
+please look at the jupyter notebook found in
+this directory.
+"""
+
 # Set Up Imports
 from numpy.lib.type_check import real
 from util import *
